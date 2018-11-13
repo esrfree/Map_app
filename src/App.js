@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import './App.css';
 import { load_google_maps, load_foursquare_places } from './apiCalls'
+import Sidebar from './Sidebar'
 
 class App extends Component {
     constructor(props) {
@@ -42,6 +43,7 @@ class App extends Component {
                     },
                     map: this.map,
                     venue: ven,
+                    //this id is gonna be used to compare markers and venues
                     id: ven.venue.id,
                     name: ven.venue.name,
                     animation: google.maps.Animation.DROP
@@ -78,7 +80,26 @@ class App extends Component {
         })
     }
 
-    filterVenues(query) {
+    clickedItem = (ven) => {
+        let marker = this.markers.filter(m => m.id === ven.venue.id)[0]
+        let contentInfowindow = '<div class="info_box">' +
+                                '<h4>' + ven.venue.name + '</h4>' +
+                                '<p>' + ven.venue.location.formattedAddress[0] + '</p>' +
+                                '<p>' + ven.venue.location.formattedAddress[1] + '</p>';
+        this.infowindow.setContent(contentInfowindow);
+        this.map.setCenter(marker.position);
+        this.infowindow.open(this.map, marker);
+        if (marker.getAnimation() !== null) {
+            marker.setAnimation(null);
+        } else {
+            marker.setAnimation(this.google.maps.Animation.BOUNCE);
+        }
+        setTimeout(() => {
+            marker.setAnimation(null)
+        }, 1500);
+    }
+
+    filterVenues = (query) => {
 
         let filteredVenues = this.venues.filter(v => v.venue.name.toLowerCase().includes(query.toLowerCase()))
 
@@ -88,8 +109,7 @@ class App extends Component {
             m.setVisible(false)
         })
 
-        this.setState({ query })
-        this.setState({ venues: filteredVenues})
+        this.setState({ venues: filteredVenues, query})
     }
 
 
@@ -97,14 +117,12 @@ class App extends Component {
     return (
         <div>
             <div id="map"></div>
-            <div id="sidebar">
-                <input placeholder="Filter results" value={this.state.query} onChange={(event) => this.filterVenues(event.target.value)} />
-                {this.state.venues.length > 0 && this.state.venues.map(v => (
-                    <div key={v.venue.id} className = "venue-item">
-                        {v.venue.name}
-                    </div>
-                ))}
-            </div>
+            <Sidebar
+                query = {this.state.query}
+                filterVenues= {this.filterVenues}
+                venues = {this.state.venues}
+                clickedItem = {this.clickedItem}
+            />
         </div>
 
     );
