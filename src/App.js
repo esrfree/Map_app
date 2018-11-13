@@ -6,7 +6,8 @@ class App extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            query: ''
+            query: '',
+            venues: []
         }
     }
 
@@ -20,19 +21,19 @@ class App extends Component {
             foursquarePlacesPromise
         ]).then(values => {
             let google = values[0];
-            let venues = values[1].response.groups[0].items;
+            this.venues = values[1].response.groups[0].items;
 
             //storing everything from google on the component properties for easier accesing
             this.google = google;
             this.markers = [];
-            this.infowindows = new google.maps.InfoWindow();
+            this.infowindow = new google.maps.InfoWindow();
             this.map = new google.maps.Map(document.getElementById('map'), {
-                center: {lat: venues[0].venue.location.lat, lng: venues[0].venue.location.lng},
+                center: {lat: this.venues[0].venue.location.lat, lng: this.venues[0].venue.location.lng},
                 zoom: 10,
                 scrollwhell: true
             })
 
-            venues.forEach(ven => {
+            this.venues.forEach(ven => {
             //Creating a marker for each value of the array "venues" in state
                 let marker = new google.maps.Marker({
                     position: {
@@ -46,29 +47,49 @@ class App extends Component {
                     animation: google.maps.Animation.DROP
                 });
 
-                let contentInfowindow = `${'<div>' + ven.venue.name + '</div><div>' + ven.venue.location.formattedAddress[0] +
-                                    '</div><div>' + ven.venue.location.formattedAddress[1]}`;
-                console.log(contentInfowindow)
+                let contentInfowindow = '<div class="info_box">' +
+                                        '<h4>' + ven.venue.name + '</h4>' +
+                                        '<p>' + ven.venue.location.formattedAddress[0] + '</p>' +
+                                        '<p>' + ven.venue.location.formattedAddress[1] + '</p>';
 
-                google.maps.event.addListener(marker, 'click', function() {
-                    this.infowindows.setContent(contentInfowindow)
-                    this.infowindows.open(this.map, marker)
+                marker.addListener('click', () => {
+                    if (marker.getAnimation() !== null) {
+                        marker.setAnimation(null);
+                    } else {
+                        marker.setAnimation(google.maps.Animation.BOUNCE);
+                    }
+                    setTimeout(() => {
+                        marker.setAnimation(null)
+                    }, 1500);
+                });
+
+                google.maps.event.addListener(marker,'click', () => {
+                    this.infowindow.setContent(contentInfowindow);
+                    this.map.setCenter(marker.position);
+                    this.map.setZoom(13);
+                    this.infowindow.open(this.map, marker);
                 })
 
-                this.markers.push(marker)
+                this.markers.push(marker);
             })
+
+            this.setState({ venues:this.venues })
 
         })
     }
 
     filterVenues(query) {
-        this.setState({ query })
 
-        this.markers.forEach(marker => {
-            marker.name.toLowerCase().includes(query.toLowerCase()) === true?
-            marker.setVisible(true) :
-            marker.setVisible(false)
+        let filteredVenues = this.venues.filter(v => v.venue.name.toLowerCase().includes(query.toLowerCase()))
+
+        this.markers.forEach(m => {
+            m.name.toLowerCase().includes(query.toLowerCase()) === true?
+            m.setVisible(true) :
+            m.setVisible(false)
         })
+
+        this.setState({ query })
+        this.setState({ venues: filteredVenues})
     }
 
 
@@ -77,7 +98,12 @@ class App extends Component {
         <div>
             <div id="map"></div>
             <div id="sidebar">
-                <input value={this.state.query} onChange={(event) => this.filterVenues(event.target.value)} />
+                <input placeholder="Filter results" value={this.state.query} onChange={(event) => this.filterVenues(event.target.value)} />
+                {this.state.venues.length > 0 && this.state.venues.map(v => (
+                    <div key={v.venue.id} className = "venue-item">
+                        {v.venue.name}
+                    </div>
+                ))}
             </div>
         </div>
 
