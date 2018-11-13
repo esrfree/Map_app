@@ -30,7 +30,7 @@ class App extends Component {
             this.infowindow = new google.maps.InfoWindow();
             this.map = new google.maps.Map(document.getElementById('map'), {
                 center: {lat: this.venues[0].venue.location.lat, lng: this.venues[0].venue.location.lng},
-                zoom: 10,
+                zoom: 13,
                 scrollwhell: true
             })
 
@@ -68,7 +68,7 @@ class App extends Component {
                 google.maps.event.addListener(marker,'click', () => {
                     this.infowindow.setContent(contentInfowindow);
                     this.map.setCenter(marker.position);
-                    this.map.setZoom(13);
+                    this.map.setZoom(15);
                     this.infowindow.open(this.map, marker);
                 })
 
@@ -88,6 +88,7 @@ class App extends Component {
                                 '<p>' + ven.venue.location.formattedAddress[1] + '</p>';
         this.infowindow.setContent(contentInfowindow);
         this.map.setCenter(marker.position);
+        this.map.setZoom(15);
         this.infowindow.open(this.map, marker);
         if (marker.getAnimation() !== null) {
             marker.setAnimation(null);
